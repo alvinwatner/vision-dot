@@ -1,11 +1,15 @@
 from fastapi import FastAPI
 import uvicorn
 from fastapi.routing import APIRoute
-from app.api.websocket_routes import router
+from app.api.websocket_routes import router as websocket_routes
+from app.api.auth_routes import router as auth_routes
+from app.api.http_routes import router as http_routes
 
 app = FastAPI()
 
-app.include_router(router)
+app.include_router(websocket_routes)
+app.include_router(auth_routes)
+app.include_router(http_routes)
 
 
 def check_registered_routes():
