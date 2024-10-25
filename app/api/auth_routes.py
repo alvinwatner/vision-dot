@@ -22,6 +22,11 @@ Registration can improved by sending an email verification first before actually
 """
 
 
+def set_access_token_cookie(email: str, response: Response):
+    access_token = access_security.create_access_token(subject={"email": email})
+    access_security.set_access_cookie(response, access_token)
+
+
 @router.post("/register", response_model=SuccessResponse)
 async def register(user: UserRegister, response: Response):
     user_in_db = await users_collection.find_one({"email": user.email})
@@ -30,8 +35,7 @@ async def register(user: UserRegister, response: Response):
                             detail=ErrorResponse(message="Email has already registered").dict())
     try:
         await users_collection.insert_one(user.dict())
-        access_token = access_security.create_access_token(subject={"email": user.email})
-        access_security.set_access_cookie(response, access_token)
+        set_access_token_cookie(email=user.email, response=response)
         return SuccessResponse(message="User registered successfully", data={"email": user.email})
 
     except Exception as e:
@@ -53,8 +57,7 @@ async def login(user: UserLogin, response: Response):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail=ErrorResponse(message="Wrong email or password").dict())
 
-    access_token = access_security.create_access_token(subject={"email": user_in_db.email})
-    access_security.set_access_cookie(response, access_token)
+    set_access_token_cookie(email=user_in_db.email, response=response)
     return SuccessResponse(message="User logged in", data=user_in_db.dict(exclude={"password"}))
 
 
