@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dot Vision with WebSocket</title>
+</head>
+<body>
+<h1>Webcam Capture and Send via WebSocket</h1>
+<select id="cameraSelect"></select>
+
+<!-- Video element to display webcam feed -->
+<video id="video" autoplay playsinline></video>
+
+<!-- Button to capture and send the image -->
+<button id="captureButton">Capture and Send Image</button>
+
+<p id="result">Waiting for WebSocket result...</p>
+
+<script>
+    const cameraSelect = document.getElementById('cameraSelect');
+const videoElement = document.getElementById('video');
+const captureButton = document.getElementById('captureButton');
+const resultDiv = document.getElementById('result');  // Reference to the result div
+
+// Initialize WebSocket connection
+const socket = new WebSocket('{{ websocket_url }}');
+
+// Handle WebSocket connection open
+socket.addEventListener('open', () => {
+    console.log('Connected to WebSocket');
+    resultDiv.textContent = 'Connected to WebSocket';
+});
+
+// Handle incoming WebSocket messages
+socket.addEventListener('message', (event) => {
+    const data = JSON.parse(event.data);
+    if (data.result) {
+        resultDiv.textContent = `Result from server: ${data.result}`;
+    } else {
+        resultDiv.textContent = 'Message from server: ' + event.data;
+    }
+});
+
+// Function to get available video input devices (cameras)
+async function getCameras() {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+    // Populate the camera selection dropdown
+    cameraSelect.innerHTML = '';
+    videoDevices.forEach((device, index) => {
+        const option = document.createElement('option');
+        option.value = device.deviceId;
+        option.text = device.label || `Camera ${index + 1}`;
+        cameraSelect.appendChild(option);
+    });
+}
+
+// Function to start the video stream from the selected camera
+async function startCamera(deviceId) {
+    // Stop any previous stream if it's active
+    if (videoElement.srcObject) {
+        videoElement.srcObject.getTracks().forEach(track => track.stop());
+    }
+
+    // Start the new camera stream
+    const stream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: deviceId ? { exact: deviceId } : undefined }
+    });
+    videoElement.srcObject = stream;
+}
+
+// Event listener for the camera selection change
+cameraSelect.addEventListener('change', (event) => {
+    startCamera(event.target.value);
+});
+
+// Function to capture an image from the video and send it via WebSocket
+function captureAndSendImage() {
+    // Create a canvas to capture the image
+    const canvas = document.createElement('canvas');
+    canvas.width = videoElement.videoWidth;
+    canvas.height = videoElement.videoHeight;
+
+    // Draw the current video frame to the canvas
+    const context = canvas.getContext('2d');
+    context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+    // Convert canvas to Base64-encoded image
+    let base64Image = canvas.toDataURL('image/png');
+    base64Image = base64Image.replace(/^data:image\/png;base64,/, '');
+
+
+    // Send the Base64 image over WebSocket
+    if (socket.readyState === WebSocket.OPEN) {
+        const message = {
+            frame: base64Image
+        };
+
+        socket.send(JSON.stringify(message))
+        console.log('Image sent to WebSocket');
+        resultDiv.textContent = 'Image sent to WebSocket';
+    } else {
+        console.log('WebSocket connection is not open');
+        resultDiv.textContent = 'WebSocket connection is not open';
+    }
+}
+
+// Event listener for the capture button
+captureButton.addEventListener('click', captureAndSendImage);
+
+// Initialize the camera selection dropdown and start the first camera by default
+async function init() {
+    await getCameras();
+    if (cameraSelect.options.length > 0) {
+        startCamera(cameraSelect.value);
+    }
+}
+
+init();
+
+</script>
+</body>
+</html>
