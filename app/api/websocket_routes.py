@@ -1,15 +1,24 @@
 import json
 
-from fastapi import WebSocket, status, WebSocketException, APIRouter
+from fastapi import WebSocket, status, WebSocketException, APIRouter, HTTPException
 from app.models.request_model import FrameRequest
-from app.config import logger
+from app.config import logger, access_security, cache
 from app.services.homographic_service import HomographicService
 from app.models.request_model import Coordinates
+from fastapi_jwt import JwtAuthorizationCredentials
+from app.utils.cache_helpers import get_coordinates_in_cache_or_db
 
 router = APIRouter()
 
 
 async def proces_websocket_request(websocket: WebSocket, service: callable):
+    """"
+    params:
+        websocket: WebSocket object to receive websocket connection
+        service: a function to call in order to fulfill a request
+
+    It will take a base64 encoded string with key of "frame" and send that frame to other specific service
+    """
     await websocket.accept()
     while True:
         data = await websocket.receive_json()
@@ -22,15 +31,18 @@ async def proces_websocket_request(websocket: WebSocket, service: callable):
         await websocket.send_json({"result": result})
 
 
-# TODO: get user data, find the coordinates from that user, use it for homographic transformation
-@router.websocket("/ws/homographic")
+@router.websocket("/ws/homographic", name="websocket_homographic")
 async def homographic_websocket(websocket: WebSocket):
-    with open("/home/kaorikizuna/Dot Vision/dot-vision/app/coordinates/example_coordinates.json", "r") as f:
-        example_data = json.load(f)
+    try:
+        credential: JwtAuthorizationCredentials = await access_security(websocket.cookies.get("access_token_cookie"))
+    except Exception as e:
+        logger.error(f"error happened: {e}")
+        await websocket.close(code=1008)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token")
+    user_email = credential.subject.get("email")
+    coordinates = await get_coordinates_in_cache_or_db(email=user_email)
 
-    validated_coordinates_data = Coordinates(**example_data)
-
-    homographic_service = HomographicService(coordinates=validated_coordinates_data)
+    homographic_service = HomographicService(coordinates=coordinates)
     await proces_websocket_request(websocket, homographic_service.execute)
 
 
