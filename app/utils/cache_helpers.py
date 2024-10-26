@@ -11,5 +11,6 @@ async def get_coordinates_in_cache_or_db(email: str):
     user = await users_collection.find_one({"email": email})
     user = User(**user)
     if user.coordinates is not None:
+        cache[email] = user.coordinates
         return user.coordinates
     raise ValueError("User coordinates are not set. Try to set them first.")
