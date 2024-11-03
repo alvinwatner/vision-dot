@@ -4,6 +4,8 @@ version = "0.1.0"
 description = ""
 authors = ["kaorikizuna <34364395+Agung-Krisna@users.noreply.github.com>"]
 readme = "README.md"
+package-mode = false
+
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -27,7 +29,6 @@ postinstall = "pip install ultralytics==8.2.100 --extra-index-url https://downlo
 # in requirements.txt:
 # --extra-index-url https://download.pytorch.org/whl/cpu
 # ultralytics
-
 
 
 
