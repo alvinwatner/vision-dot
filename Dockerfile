@@ -20,7 +20,7 @@ RUN pip install ultralytics==8.2.100 --extra-index-url https://download.pytorch.
 RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
 
 # decrypting the configuration file
-RUN wget https://raw.githubusercontent.com/elasticdog/transcrypt/refs/heads/main/transcrypt && chmod +x transcrypt && ./transcrypt -c aes-256-cbc -p "$SECRET_PASS"
+RUN ./transcrypt -c aes-256-cbc -p "$SECRET_PASS"
 
 EXPOSE 5000
 
