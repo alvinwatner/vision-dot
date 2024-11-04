@@ -3,7 +3,8 @@ FROM python:3.10-slim
 WORKDIR  /dot_vision
 
 ENV PROCESS_WITH=cpu
-ENV PORT=5000
+# google cloud run injects with PORT environment variable
+# ENV PORT=5000
 ENV PYTHONPATH=/dot_vision
 
 RUN pip install poetry
@@ -17,6 +18,9 @@ RUN pip install ultralytics==8.2.100 --extra-index-url https://download.pytorch.
 
 # downloading the libGL.so.1 library required by openCV
 RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
+
+# decrypting the configuration file
+RUN wget https://raw.githubusercontent.com/elasticdog/transcrypt/refs/heads/main/transcrypt && chmod +x transcrypt && ./transcrypt -c aes-256-cbc -p "$SECRET_PASS"
 
 EXPOSE 5000
 
