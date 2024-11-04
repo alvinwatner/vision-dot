@@ -1,17 +1,15 @@
 [tool.poetry]
-name = "dot-vision"
+name = "dot_vision"
 version = "0.1.0"
 description = ""
 authors = ["kaorikizuna <34364395+Agung-Krisna@users.noreply.github.com>"]
 readme = "README.md"
-package-mode = false
 
 
 [tool.poetry.dependencies]
 python = "^3.10"
 fastapi = "^0.115.0"
 pydantic = { extras = ["email"], version = "^2.9.2" }
-opencv-python = "^4.10.0.84"
 celery = "^5.4.0"
 pytest = "^8.3.3"
 uvicorn = { extras = ["standard"], version = "^0.30.6" }
@@ -20,9 +18,7 @@ pymongo = { extras = ["srv"], version = "^4.10.1" }
 fastapi-jwt = { extras = ["authlib"], version = "^0.3.0" }
 passlib = { extras = ["bcrypt"], version = "^1.7.4" }
 cachetools = "^5.5.0"
-
-[tool.poetry.scripts]
-postinstall = "pip install ultralytics==8.2.100 --extra-index-url https://download.pytorch.org/whl/cpu"
+opencv-python-headless = "^4.10.0.84"
 
 
 # production with cpu only torch
