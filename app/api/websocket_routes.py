@@ -34,7 +34,11 @@ async def proces_websocket_request(websocket: WebSocket, service: callable):
 @router.websocket("/ws/homographic", name="websocket_homographic")
 async def homographic_websocket(websocket: WebSocket):
     try:
-        credential: JwtAuthorizationCredentials = await access_security(websocket.cookies.get("access_token_cookie"))
+        authorization_token = websocket.headers.get("Authorization")
+
+        # get the token in last section
+        access_token = authorization_token.split()[-1]
+        credential: JwtAuthorizationCredentials = await access_security(access_token)
     except Exception as e:
         logger.error(f"error happened: {e}")
         await websocket.close(code=1008)
