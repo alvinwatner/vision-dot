@@ -17,6 +17,10 @@ class User(BaseModel):
     full_name: pydantic.constr(max_length=50)
     coordinates: Optional[Coordinates] = None
 
+    # image dimensions
+    image2d_width: Optional[int] = None
+    image2d_height: Optional[int] = None    
+
 
 class UserRegister(BaseModel):
     email: pydantic.EmailStr

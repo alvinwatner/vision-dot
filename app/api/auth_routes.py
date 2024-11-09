@@ -21,6 +21,17 @@ User login:
 Registration can improved by sending an email verification first before actually registering the user
 """
 
+"""
+Flow: 
+1. client logs in
+2. backend sends access token
+3. front end stores access token to local storage
+4. frond end sends token with query params in /ws/homographic
+
+Header key
+Authorization: Bearer <token>
+"""
+
 
 def set_access_token_cookie(email: str, response: Response):
     access_token = access_security.create_access_token(subject={"email": email})
@@ -35,8 +46,8 @@ async def register(user: UserRegister, response: Response):
                             detail=ErrorResponse(message="Email has already registered").dict())
     try:
         await users_collection.insert_one(user.dict())
-        set_access_token_cookie(email=user.email, response=response)
-        return SuccessResponse(message="User registered successfully", data={"email": user.email})
+        access_token = access_security.create_access_token(subject={"email": user.email})
+        return SuccessResponse(message="User registered successfully", data={"access_token": access_token})
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
@@ -57,8 +68,8 @@ async def login(user: UserLogin, response: Response):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail=ErrorResponse(message="Wrong email or password").dict())
 
-    set_access_token_cookie(email=user_in_db.email, response=response)
-    return SuccessResponse(message="User logged in", data=user_in_db.dict(exclude={"password"}))
+    access_token = access_security.create_access_token(subject={"email": user.email})
+    return SuccessResponse(message="User logged in", data={"access_token": access_token})
 
 
 @router.get("/users/me")

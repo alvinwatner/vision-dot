@@ -1,3 +1,5 @@
+import os
+
 from app.config import logger
 from ultralytics import YOLO
 from abc import ABC
@@ -5,11 +7,22 @@ from typing import Any, Optional, Union
 from celery import Celery, Task
 from app.config import CONFIDENCE_THRESHOLD
 from app.utils.image_helpers import get_image_from_bytes
+import torch
 
 
 class BaseService(ABC):
     def __init__(self, celery_app: Optional[Celery] = None):
         self.model = YOLO("yolov8n.pt")
+
+        # dynamically change processing power to either cuda or cpu        
+        # if torch.cuda.is_available() and os.environ.get("PROCESS_WITH", "cpu") == "cuda":
+        #     device = torch.device("cuda")
+        # else:
+        #     device = torch.device("cpu")
+              
+        device = torch.device("cpu")
+        self.model.to(device)
+
         self.logger = logger
 
         self.celery_app = celery_app

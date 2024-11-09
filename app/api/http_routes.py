@@ -35,6 +35,34 @@ async def set_coordinates(coordinates: Coordinates,
                             detail=ErrorResponse(message="Unknown error", error=str(e)).dict())
 
 
+@router.post("/image2d_dimensions", response_model=SuccessResponse)
+async def set_image2d_dimensions(image2d_width: int, image2d_height: int,
+                                 email: str):
+    user_email = email
+    user = await users_collection.find_one({"email": user_email})
+    user = User(**user)
+
+    # Directly set the fields to ensure they are updated
+    user.image2d_width = image2d_width
+    user.image2d_height = image2d_height
+
+    print(f"user_email: {user_email}, image2d_width: {user.image2d_width}, image2d_height: {user.image2d_height}")
+
+    try:
+        update_query = {"$set": {"image2d_width": user.image2d_width, "image2d_height": user.image2d_height}}
+        result = await users_collection.update_one({"email": user_email}, update_query)
+
+        # cache the dimensions to reduce database calls
+        cache[user_email] = {"image2d_width": user.image2d_width, "image2d_height": user.image2d_height}
+
+        if result.modified_count == 0:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=ErrorResponse(message="User not found or no changes were made").dict())
+        return SuccessResponse(message="Successfully updated image2d dimensions", data={"image2d_width": user.image2d_width, "image2d_height": user.image2d_height})
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=ErrorResponse(message="Unknown error", error=str(e)).dict())
+
 templates = Jinja2Templates(directory=project_root / "templates")
 
 

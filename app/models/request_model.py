@@ -8,7 +8,7 @@ from pydantic import BaseModel, conlist, model_validator, ValidationError, field
 
 class FrameRequest(BaseModel):
     frame: str  # base64 string
-
+    
     @field_validator("frame")
     @classmethod
     def decode_frame(cls, value: str):
