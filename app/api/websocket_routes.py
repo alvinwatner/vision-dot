@@ -52,18 +52,17 @@ async def proces_websocket_request(websocket: WebSocket, service: callable, emai
 
 @router.websocket("/ws/homographic", name="websocket_homographic")
 async def homographic_websocket(websocket: WebSocket):
-    # try:
-    #     authorization_token = websocket.headers.get("Authorization")
+    try:
+        authorization_token = websocket.headers.get("Authorization")
 
-    #     # get the token in last section
-    #     access_token = authorization_token.split()[-1]
-    #     credential: JwtAuthorizationCredentials = await access_security(access_token)
-    # except Exception as e:
-    #     logger.error(f"error happened: {e}")
-    #     await websocket.close(code=1008)
-    #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token")
-    # user_email = credential.subject.get("email")
-    user_email = 'alvin2phantomhive@gmail.com'
+        # get the token in last section
+        access_token = authorization_token.split()[-1]
+        credential: JwtAuthorizationCredentials = await access_security(access_token)
+    except Exception as e:
+        logger.error(f"error happened: {e}")
+        await websocket.close(code=1008)
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token")
+    user_email = credential.subject.get("email")
     coordinates = await get_coordinates_in_cache_or_db(email=user_email)
 
     homographic_service = HomographicService(coordinates=coordinates)
