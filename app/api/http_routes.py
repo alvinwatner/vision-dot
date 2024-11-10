@@ -12,9 +12,11 @@ router = APIRouter()
 
 
 @router.post("/coordinates", response_model=SuccessResponse)
-async def set_coordinates(coordinates: Coordinates):
-    # user_email = credentials.subject.get("email")
-    user_email = 'alvin2phantomhive@gmail.com'
+async def set_coordinates(
+    coordinates: Coordinates,
+    credentials: JwtAuthorizationCredentials = Security(access_security),
+):
+    user_email = credentials.subject.get("email")
     user = await users_collection.find_one({"email": user_email})
     user = User(**user)
     user.coordinates = coordinates
@@ -45,18 +47,18 @@ async def set_coordinates(coordinates: Coordinates):
 
 
 @router.post("/image2d_dimensions", response_model=SuccessResponse)
-async def set_image2d_dimensions(image2d_width: int, image2d_height: int, email: str):
-    user_email = email
+async def set_image2d_dimensions(
+    image2d_width: int,
+    image2d_height: int,
+    credentials: JwtAuthorizationCredentials = Security(access_security),
+):
+    user_email = credentials.subject.get("email")
     user = await users_collection.find_one({"email": user_email})
     user = User(**user)
 
     # Directly set the fields to ensure they are updated
     user.image2d_width = image2d_width
     user.image2d_height = image2d_height
-
-    print(
-        f"user_email: {user_email}, image2d_width: {user.image2d_width}, image2d_height: {user.image2d_height}"
-    )
 
     try:
         update_query = {
