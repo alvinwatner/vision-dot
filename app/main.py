@@ -32,4 +32,4 @@ def check_registered_routes():
 
 if __name__ == '__main__':
     check_registered_routes()
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get('PORT', 3001)))
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get('PORT', 3001)), reload=True)
