@@ -1,6 +1,7 @@
 import json
 
-from fastapi import WebSocket, status, WebSocketException, APIRouter, HTTPException
+from fastapi import WebSocket, status, WebSocketException, APIRouter, HTTPException, Security, Depends
+from fastapi.security import HTTPAuthorizationCredentials
 from app.models.request_model import FrameRequest
 from app.config import logger, access_security, cache
 from app.services.homographic_service import HomographicService
@@ -31,18 +32,35 @@ async def proces_websocket_request(websocket: WebSocket, service: callable):
         await websocket.send_json({"result": result})
 
 
+async def authenticate_websockets_with_jwt(authorization_header: str) -> JwtAuthorizationCredentials:
+    authorization_scheme = "Bearer"
+    if authorization_header.startswith(authorization_scheme):
+        # get token from authorization bearer
+        token = authorization_header.split()[-1]
+    else:
+        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid token format")
+        # creating an HTTP authorization credentials, because fastapi-jwt library works with HTTP headers
+        # and not WebSocket
+    http_credential = HTTPAuthorizationCredentials(scheme=authorization_scheme, credentials=token)
+
+    try:
+        credential = await access_security(bearer=http_credential)
+        if not credential:
+            raise WebSocketException(
+                code=status.WS_1008_POLICY_VIOLATION,
+                reason="Invalid or expired token",
+            )
+        return credential
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail=str(e))
+
+
 @router.websocket("/ws/homographic", name="websocket_homographic")
 async def homographic_websocket(websocket: WebSocket):
-    try:
-        authorization_token = websocket.headers.get("Authorization")
+    access_token = websocket.headers.get("Authorization")
+    credential = await authenticate_websockets_with_jwt(access_token)
 
-        # get the token in last section
-        access_token = authorization_token.split()[-1]
-        credential: JwtAuthorizationCredentials = await access_security(access_token)
-    except Exception as e:
-        logger.error(f"error happened: {e}")
-        await websocket.close(code=1008)
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token")
     user_email = credential.subject.get("email")
     coordinates = await get_coordinates_in_cache_or_db(email=user_email)
 
