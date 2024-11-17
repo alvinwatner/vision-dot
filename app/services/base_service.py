@@ -69,4 +69,10 @@ class BaseService(ABC):
 
     @staticmethod
     def calculate_bottom_center(x1, y1, x2, y2):
-        return (x1 + x2) // 2, y1
+        """
+        x1: left
+        x2: right
+        y1: top
+        y2: bottom
+        """
+        return (x1 + x2) // 2, y2
