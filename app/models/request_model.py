@@ -33,8 +33,8 @@ class Points(BaseModel):
 
 class Coordinates(BaseModel):
     # set minimum coordinate length here
-    source_coordinates: conlist(Points, min_length=4, max_length=20)
-    destination_coordinates: conlist(Points, min_length=4, max_length=20)
+    source_coordinates: conlist(Points, min_length=4, max_length=25)
+    destination_coordinates: conlist(Points, min_length=4, max_length=25)
 
     @model_validator(mode='after')
     def check_equal_length(self):
