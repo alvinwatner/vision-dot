@@ -3,6 +3,7 @@ import numpy as np
 
 from app.models.request_model import Coordinates
 from app.services.base_service import BaseService
+from app.config import logger
 
 
 class HomographicService(BaseService):
@@ -25,5 +26,5 @@ class HomographicService(BaseService):
             source_coor = np.array([[bottom_center]], dtype="float32")
             transformed_coor = cv2.perspectiveTransform(source_coor, self.H)[0][0]
             homographed_people.append(list(map(int, transformed_coor)))
-        print(homographed_people)
+        logger.info(homographed_people)
         return homographed_people
